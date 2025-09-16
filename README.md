@@ -49,3 +49,17 @@ Ferramenta web para **impressão 3D**, com duas funções principais:
 ### 1. Clone este repositório:
 ```bash
 git clone https://github.com/Arthurz2/Calculadora-P.B.C-Impress-o-3d.git
+
+````
+2. Acesse a pasta do projeto:
+cd Calculadora-P.B.C-Impress-o-3d
+
+3. Instale dependências:
+npm install
+
+4. Execute:
+npm run dev
+
+5. Acesse no navegador:
+http://localhost:3000
+
