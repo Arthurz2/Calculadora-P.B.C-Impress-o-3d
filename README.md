@@ -39,6 +39,9 @@ Ferramenta web para **impressão 3D**, com duas funções principais:
 ### 🔹 Tela – Calculadora de Preço
 ![Calculadora Preço] <img width="748" height="748" alt="image" src="https://github.com/user-attachments/assets/ccf5992d-cc1d-41c3-908a-5eddec00b8de" />
 
+### 🔹 Tela – Mistura de cores
+![Mistura de cores] <img width="996" height="847" alt="image" src="https://github.com/user-attachments/assets/e2f944a1-e9ed-4adc-b885-ae30bc081517" />
+
 
 *(As imagens acima mostram exemplos reais de uso. Salve seus prints em `docs/screenshots/` para exibir aqui.)*
 
