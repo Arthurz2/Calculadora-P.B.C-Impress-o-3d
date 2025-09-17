@@ -47,6 +47,29 @@ export default function PBCCalculator() {
     }
   } | null>(null)
 
+  // Color mixer states
+  const [colorData, setColorData] = useState({
+    hexColor: "#FF5733",
+    totalVolume: "100",
+  })
+  const [colorResults, setColorResults] = useState<{
+    rgb: { r: number; g: number; b: number }
+    proportions: {
+      red: number
+      yellow: number
+      blue: number
+      white: number
+      black: number
+    }
+    volumes: {
+      red: number
+      yellow: number
+      blue: number
+      white: number
+      black: number
+    }
+  } | null>(null)
+
   const nozzleSizes = [0.2, 0.4, 0.6, 0.8, 1.0]
 
   const calculateLayerHeights = () => {
@@ -111,6 +134,80 @@ export default function PBCCalculator() {
     })
   }
 
+  // Color mixing calculation function
+  const calculateColorMix = () => {
+    // Convert hex to RGB
+    const hex = colorData.hexColor.replace("#", "")
+    const r = Number.parseInt(hex.substr(0, 2), 16)
+    const g = Number.parseInt(hex.substr(2, 2), 16)
+    const b = Number.parseInt(hex.substr(4, 2), 16)
+
+    const totalVolume = Number.parseFloat(colorData.totalVolume)
+
+    // Normalize RGB values to 0-1 range
+    const rNorm = r / 255
+    const gNorm = g / 255
+    const bNorm = b / 255
+
+    // Calculate proportions based on RGB values
+    // This is a simplified color mixing algorithm
+    let redProp = 0
+    let yellowProp = 0
+    let blueProp = 0
+    let whiteProp = 0
+    let blackProp = 0
+
+    // Primary color extraction
+    redProp = rNorm * 0.4
+    blueProp = bNorm * 0.4
+
+    // Yellow is created from red + green components
+    yellowProp = Math.min(rNorm, gNorm) * 0.4
+
+    // White component (brightness)
+    const brightness = Math.max(rNorm, gNorm, bNorm)
+    whiteProp = brightness * 0.3
+
+    // Black component (darkness)
+    const darkness = 1 - brightness
+    blackProp = darkness * 0.2
+
+    // Normalize proportions to sum to 1
+    const totalProp = redProp + yellowProp + blueProp + whiteProp + blackProp
+    if (totalProp > 0) {
+      redProp = redProp / totalProp
+      yellowProp = yellowProp / totalProp
+      blueProp = blueProp / totalProp
+      whiteProp = whiteProp / totalProp
+      blackProp = blackProp / totalProp
+    }
+
+    // Calculate volumes
+    const redVol = redProp * totalVolume
+    const yellowVol = yellowProp * totalVolume
+    const blueVol = blueProp * totalVolume
+    const whiteVol = whiteProp * totalVolume
+    const blackVol = blackProp * totalVolume
+
+    setColorResults({
+      rgb: { r, g, b },
+      proportions: {
+        red: Math.round(redProp * 100 * 100) / 100,
+        yellow: Math.round(yellowProp * 100 * 100) / 100,
+        blue: Math.round(blueProp * 100 * 100) / 100,
+        white: Math.round(whiteProp * 100 * 100) / 100,
+        black: Math.round(blackProp * 100 * 100) / 100,
+      },
+      volumes: {
+        red: Math.round(redVol * 100) / 100,
+        yellow: Math.round(yellowVol * 100) / 100,
+        blue: Math.round(blueVol * 100) / 100,
+        white: Math.round(whiteVol * 100) / 100,
+        black: Math.round(blackVol * 100) / 100,
+      },
+    })
+  }
+
   return (
     <div className="min-h-screen bg-background p-4 sm:p-6 lg:p-8">
       <div className="mx-auto max-w-6xl">
@@ -124,21 +221,28 @@ export default function PBCCalculator() {
         <Card className="border-border shadow-lg">
           <CardContent className="p-6 sm:p-8">
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted">
+              <TabsList className="grid w-full grid-cols-3 mb-8 bg-muted">
                 <TabsTrigger
                   value="pbc"
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium text-xs sm:text-sm"
                 >
-                  P.B.C (Proporção Bico Camada)
+                  P.B.C
                 </TabsTrigger>
                 <TabsTrigger
                   value="price"
-                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium text-xs sm:text-sm"
                 >
-                  Calculadora de Preço
+                  Preço
+                </TabsTrigger>
+                <TabsTrigger
+                  value="color"
+                  className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-medium text-xs sm:text-sm"
+                >
+                  Mistura de Cores
                 </TabsTrigger>
               </TabsList>
 
+              {/* PBC Calculator Tab Content */}
               <TabsContent value="pbc" className="space-y-8">
                 <div className="text-center">
                   <p className="text-muted-foreground text-base">Digite o ângulo desejado e selecione o software</p>
@@ -217,6 +321,7 @@ export default function PBCCalculator() {
                 )}
               </TabsContent>
 
+              {/* Price Calculator Tab Content */}
               <TabsContent value="price" className="space-y-8">
                 <div className="text-center">
                   <h2 className="text-2xl font-bold text-foreground mb-2">Calculadora de Preço de Impressão 3D</h2>
@@ -337,6 +442,7 @@ export default function PBCCalculator() {
                             value={priceData.paintBottles}
                             onChange={(e) => setPriceData({ ...priceData, paintBottles: e.target.value })}
                             className="h-10"
+                            placeholder="2"
                           />
                         </div>
                       </div>
@@ -548,6 +654,217 @@ export default function PBCCalculator() {
                           </CardContent>
                         </Card>
                       </div>
+                    </div>
+                  )}
+                </div>
+              </TabsContent>
+
+              {/* Color Mixer Tab Content */}
+              <TabsContent value="color" className="space-y-8">
+                <div className="text-center">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">Calculadora de Mistura de Cores</h2>
+                  <p className="text-muted-foreground">
+                    Calcule as proporções de cores primárias para criar qualquer cor RGB
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                  {/* Input Section */}
+                  <Card className="border-border">
+                    <CardHeader>
+                      <CardTitle className="text-xl">Configuração</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="hexColor" className="text-sm font-medium">
+                            Cor Desejada (Hex)
+                          </Label>
+                          <div className="flex gap-3 items-center">
+                            <Input
+                              id="hexColor"
+                              type="text"
+                              value={colorData.hexColor}
+                              onChange={(e) => setColorData({ ...colorData, hexColor: e.target.value })}
+                              className="h-10 font-mono"
+                              placeholder="#FF5733"
+                            />
+                            <div className="relative">
+                              <input
+                                type="color"
+                                value={colorData.hexColor}
+                                onChange={(e) => setColorData({ ...colorData, hexColor: e.target.value })}
+                                className="absolute inset-0 w-12 h-10 opacity-0 cursor-pointer"
+                                title="Clique para selecionar cor"
+                              />
+                              <div
+                                className="w-12 h-10 rounded border-2 border-border cursor-pointer hover:border-primary transition-colors"
+                                style={{ backgroundColor: colorData.hexColor }}
+                                title="Clique para selecionar cor"
+                              />
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Digite o código hex ou clique no quadrado para selecionar visualmente
+                          </p>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="totalVolume" className="text-sm font-medium">
+                            Volume Total (ml)
+                          </Label>
+                          <Input
+                            id="totalVolume"
+                            type="number"
+                            value={colorData.totalVolume}
+                            onChange={(e) => setColorData({ ...colorData, totalVolume: e.target.value })}
+                            className="h-10"
+                            placeholder="100"
+                          />
+                        </div>
+                      </div>
+
+                      <Button
+                        onClick={calculateColorMix}
+                        className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90 text-primary-foreground"
+                      >
+                        Calcular Mistura
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Results Section */}
+                  {colorResults && (
+                    <div className="space-y-6">
+                      {/* Color Preview */}
+                      <Card className="border-border">
+                        <CardHeader>
+                          <CardTitle className="text-lg">Cor RGB</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center gap-4">
+                            <div
+                              className="w-20 h-20 rounded-lg border-2 border-border shadow-inner"
+                              style={{ backgroundColor: colorData.hexColor }}
+                            />
+                            <div className="space-y-1 text-sm">
+                              <div>
+                                <span className="font-medium">R:</span> {colorResults.rgb.r}
+                              </div>
+                              <div>
+                                <span className="font-medium">G:</span> {colorResults.rgb.g}
+                              </div>
+                              <div>
+                                <span className="font-medium">B:</span> {colorResults.rgb.b}
+                              </div>
+                              <div>
+                                <span className="font-medium">Hex:</span> {colorData.hexColor}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Proportions */}
+                      <Card className="border-border">
+                        <CardHeader>
+                          <CardTitle className="text-lg">Proporções e Volumes</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-sm text-muted-foreground">PROPORÇÕES (%)</h4>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                      <span>Vermelho</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.proportions.red}%</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                      <span>Amarelo</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.proportions.yellow}%</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                      <span>Azul</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.proportions.blue}%</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-white border border-gray-300 rounded-full"></div>
+                                      <span>Branco</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.proportions.white}%</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-black rounded-full"></div>
+                                      <span>Preto</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.proportions.black}%</span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-3">
+                                <h4 className="font-medium text-sm text-muted-foreground">VOLUMES (ml)</h4>
+                                <div className="space-y-2 text-sm">
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                      <span>Vermelho</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.volumes.red} ml</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                      <span>Amarelo</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.volumes.yellow} ml</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                      <span>Azul</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.volumes.blue} ml</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-white border border-gray-300 rounded-full"></div>
+                                      <span>Branco</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.volumes.white} ml</span>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-3 h-3 bg-black rounded-full"></div>
+                                      <span>Preto</span>
+                                    </div>
+                                    <span className="font-medium">{colorResults.volumes.black} ml</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-4 p-3 bg-muted rounded-lg">
+                              <p className="text-xs text-muted-foreground">
+                                <strong>Dica:</strong> Comece sempre com as cores mais claras e adicione as escuras
+                                gradualmente. Misture bem entre cada adição para obter a cor desejada.
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
                   )}
                 </div>
